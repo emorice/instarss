@@ -1,16 +1,31 @@
 import requests
 import re
+import sys
 import json
 import rfeed
+import time
 import datetime
 from bs4 import BeautifulSoup
 
 from flask import Flask, url_for
+from werkzeug.exceptions import BadGateway
 
 app = Flask(__name__)
 
-def get_profile(user):
-    r = requests.get('https://www.instagram.com/' + user + '/')
+def get_profile(user, retries=10):
+    tries = 0
+    status = 0
+    while status != 200 and tries < retries:
+        if tries:
+                time.sleep(1)
+        r = requests.get('https://www.instagram.com/' + user + '/', allow_redirects=False)
+        status = r.status_code
+        if r.status_code != 200:
+            print(user, status, file=sys.stderr) 
+        tries += 1
+    if status != 200:
+        sys.stderr.flush()
+        raise BadGateway(description=status)
     return r.content
 
 def create_feed(profile_html, url, max_items=10):
@@ -34,7 +49,7 @@ def create_feed(profile_html, url, max_items=10):
         user = data['entry_data']['ProfilePage'][0]['graphql']['user']
         timeline = user['edge_owner_to_timeline_media']
     except KeyError:
-        print(data)
+        print(data, file=sys.stderr)
         raise
 
     items = []
@@ -70,6 +85,6 @@ def rss(username):
     try:
         feed = create_feed(profile, url_for('rss', username=username))
     except:
-        print(profile)
+        print(profile, file=sys.stderr)
         raise
     return feed.rss()

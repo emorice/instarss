@@ -7,7 +7,7 @@ import time
 import datetime
 from bs4 import BeautifulSoup
 
-from flask import Flask, url_for
+from flask import Flask, url_for, Response
 from werkzeug.exceptions import BadGateway
 
 app = Flask(__name__)
@@ -87,4 +87,4 @@ def rss(username):
     except:
         print(profile, file=sys.stderr)
         raise
-    return feed.rss()
+    return Response(feed.rss(), mimetype='application/rss+xml')

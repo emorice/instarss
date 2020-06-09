@@ -5,6 +5,7 @@ import json
 import rfeed
 import time
 import datetime
+import keyring
 from bs4 import BeautifulSoup
 
 from flask import Flask, url_for, Response
@@ -15,10 +16,16 @@ app = Flask(__name__)
 def get_profile(user, retries=10):
     tries = 0
     status = 0
+    
+    session_id = keyring.get_password("instarss", "user")
+    
     while status != 200 and tries < retries:
         if tries:
                 time.sleep(1)
-        r = requests.get('https://www.instagram.com/' + user + '/', allow_redirects=False)
+        r = requests.get(
+            'https://www.instagram.com/' + user + '/',
+            cookies={'sessionid':session_id},
+            allow_redirects=False)
         status = r.status_code
         if r.status_code != 200:
             print(user, status, file=sys.stderr) 

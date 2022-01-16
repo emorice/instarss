@@ -43,7 +43,7 @@ def create_feed(profile_html, url, max_items=10):
     # Extract the data object
     data = None
     for script in soup.find_all('script'):
-        text = script.get_text()
+        text = str(script.string)
         pat = '^\s*window._sharedData\s*='
         if re.match(pat, text):
             data = json.loads(
@@ -55,7 +55,7 @@ def create_feed(profile_html, url, max_items=10):
     try:
         user = data['entry_data']['ProfilePage'][0]['graphql']['user']
         timeline = user['edge_owner_to_timeline_media']
-    except KeyError:
+    except (KeyError, TypeError):
         print(data, file=sys.stderr)
         raise
 
